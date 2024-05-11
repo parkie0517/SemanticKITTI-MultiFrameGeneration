@@ -9,6 +9,10 @@ This repository is used to <u>**generate MultiFrame semantic-KITTI Dataset**</u>
 
 ## Prerequisites
 
+## Environment Settings
+- Create a conda environment
+- Install Numpy and Tmux
+
 
 ## Dataset preparation
 - First, let's download the original semanticKITTI dataset. You need to download all the data by clicking on the link below.
@@ -20,10 +24,13 @@ This repository is used to <u>**generate MultiFrame semantic-KITTI Dataset**</u>
 ![alt text](./image_src/structure.png)
 
 ## Running the code
-
-- The text file of the algorithm is also in this repository
-- Okay, now run the code below
-    - python generate_multiframe.py --dataset PATH_TO_KITTI --number NUMBER_OF_N --output OUTPUT_PATH
+If you run into any 'missing module' errors while running the code, then simply download the missing modules!  
+Follow the steps below.
+- First, create a tmix session
+- Go into that session
+- And run the code below
+    - python ./generate_multiframe.py --dataset PATH_TO_KITTI --number NUMBER_OF_N --output OUTPUT_PATH
+- for example
     - CUDA_VISIBLE_DEVICES=1 python generate_multiframe.py -d /mnt/ssd2/jihun/dataset/sequences/00 -o /mnt/ssd2/jihun/dataset/multiframe/sequences/00
 
 
