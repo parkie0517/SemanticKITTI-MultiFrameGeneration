@@ -26,12 +26,18 @@ This repository is used to <u>**generate MultiFrame semantic-KITTI Dataset**</u>
 ## Running the code
 If you run into any 'missing module' errors while running the code, then simply download the missing modules!  
 Follow the steps below.
-- First, create a tmix session
+- First, create a tmux session
 - Go into that session
+- Open the 'generate_multiframe.sh' file
+- Change the 4 arguments!
+    - d: the path of the 'dataset' directory
+    - o: the output path of the multiframe dataset
+    - n: number of multiframes you want to combine
+    - i: make this 5!
+- Save the file and run the code below
 - And run the code below
-    - python ./generate_multiframe.py --dataset PATH_TO_KITTI --number NUMBER_OF_N --output OUTPUT_PATH
-- for example
-    - CUDA_VISIBLE_DEVICES=1 python generate_multiframe.py -d /mnt/ssd2/jihun/dataset/sequences/00 -o /mnt/ssd2/jihun/dataset/multiframe/sequences/00
+    - sh ./generate_multiframe.sh
+- if you get an error try getting rid of 'CUDA_VISIBLE_DEVICES=1' in the 'generate_multiframe.sh' file.
 
 
 ## How does the code work?

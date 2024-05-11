@@ -281,6 +281,8 @@ def load_calib(calib_path):
 
 if __name__ == '__main__':
     start_time = time.time()
+    print('######################################################################')
+    print('######################################################################')
 
     # 1. argument settings
     parser = argparse.ArgumentParser(
@@ -362,18 +364,22 @@ if __name__ == '__main__':
     print(f'files from 0 ~ {sequence_length} will be used')
     print(f'total number of output files: {number_output_files}')
     
-    # 3. read poses.txt file (it's more efficient to read poses.txt just once)
+
+    # 3. read the calib.txt
+    calib_location = os.path.join(dataset, "calib.txt")
+    Tr = load_calib(calib_location)
+    Tr_inv = inv(Tr)
+
+    # 4. read poses.txt file (it's more efficient to read poses.txt just once)
     poses_location = os.path.join(dataset, "poses.txt")
     poses = load_poses(poses_location)
-
-    # 4. read the calib.txt
-    calib_location = os.path.join(dataset, "calib.txt")
-    calibration = load_calib(calib_location)
+    poses = np.array(poses)
+    poses = Tr_inv @ poses @ Tr
 
 
     # Used for printing out the passed time during execution
     start_time = time.time()
-    print("Begin Multi-frame Generation :)")
+    print("Begin :)")
 
     # algorithm for creating the multi-frame semantic KITTI dataset
     for i in range(0, sequence_length - increment * (n-2), increment):
@@ -424,6 +430,8 @@ if __name__ == '__main__':
         
         # Save fused scan
         np.packbits(i_bin).tofile(os.path.join(output_dir, f"{i_file_base}.bin"))
+
+        exit(0)
         """
         # Save label file
         i_label.astype(np.uint16).tofile(os.path.join(output_dir, f"{i_file_base}.label"))
@@ -447,4 +455,4 @@ if __name__ == '__main__':
     seconds_passed = int(elapsed_time % 60)
     unge = sequence_length - increment * (n-1)
     print(f'Progress: 100.00%, Time Passes: {minutes_passed}:{seconds_passed:02d}')
-    print("Multi-frame Generation Complete :D")
+    print("Complete :D")
