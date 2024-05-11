@@ -20,7 +20,7 @@ This repository is used to <u>**generate MultiFrame semantic-KITTI Dataset**</u>
     - [calib.txt & times.txt](http://www.cvlibs.net/download.php?file=data_odometry_calib.zip)
     - [poses.txt](http://www.semantic-kitti.org/assets/data_odometry_labels.zip)
     
-- Now that you have completed downloading the files, we need to make the structure of the dataset like the image shown below.
+- Now that you have completed downloading the files, we need to make the structure of the dataset like the image shown below.  
 ![alt text](./image_src/structure.png)
 
 ## Running the code
