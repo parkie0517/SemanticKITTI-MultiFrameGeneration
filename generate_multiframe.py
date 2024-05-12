@@ -60,7 +60,7 @@ def get_data(file_base, dataset_path):
     # 3. return the data
     return bin_data, label_data, invalid_data, occluded_data
 
-def load_poses(poses_path):
+def load_poses(poses_path, Tr, Tr_inv):
     """
     1. pad index with zeros    
     2. read poses.txt file
@@ -75,7 +75,8 @@ def load_poses(poses_path):
             pose_matrix = numbers.reshape((3, 4))
             # convert to a 4x4 matrix
             pose_matrix_4x4 = np.vstack([pose_matrix, [0, 0, 0, 1]])
-            poses.append(pose_matrix_4x4)
+            pose_matrix_calib = Tr_inv @ (pose_matrix_4x4 @ Tr)
+            poses.append(pose_matrix_calib)
 
     return poses
 
@@ -370,14 +371,10 @@ if __name__ == '__main__':
     Tr = load_calib(calib_location)
     Tr_inv = inv(Tr)
 
-
     # 4. read poses.txt file (it's more efficient to read poses.txt just once)
     poses_location = os.path.join(dataset, "poses.txt")
-    poses = load_poses(poses_location)
-    """
-    poses = np.array(poses)
-    poses = Tr_inv @ (poses @ Tr)
-    """
+    poses = load_poses(poses_location, Tr, Tr_inv)
+
 
     # Used for printing out the passed time during execution
     start_time = time.time()
@@ -391,7 +388,6 @@ if __name__ == '__main__':
         # read i-th data
         i_bin, i_label, i_invalid, i_occluded = get_data(i_file_base, dataset) # read i-th voxel data
         i_pose = poses[i] # read i-th pose
-        i_pose = Tr_inv @ (i_pose @ Tr)
 
         # Copy label, invalid, occluded file
         shutil.copy(os.path.join(dataset, "voxels", f"{i_file_base}.label"), output_dir)
@@ -403,7 +399,7 @@ if __name__ == '__main__':
             # read j-th data
             j_bin, j_label, j_invalid, j_occluded = get_data(j_file_base, dataset) # read j-th voxel data
             j_pose = poses[j] # read j-th pose
-            j_pose = Tr_inv @ (j_pose @ Tr)
+
 
             """ ORIGINAL
             # now, let's calculate the pose difference between i and j
@@ -412,7 +408,8 @@ if __name__ == '__main__':
 
             # get the calibrated transformation matrix
             transformation_matrix = i_pose @ inv(j_pose)
-
+            #transformation_matrix = inv(i_pose) @ j_pose
+ 
             """ORIGINAL
             # NOW WE SHALL BEGIN THE ALIGNING PROCESS! (align j into i-th space)
             # I need to optimize this code.... takes so faqing long

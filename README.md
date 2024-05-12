@@ -39,6 +39,8 @@ Follow the steps below.
     - sh ./generate_multiframe.sh
 - if you get an error try getting rid of 'CUDA_VISIBLE_DEVICES=1' in the 'generate_multiframe.sh' file.
 
+- CUDA_VISIBLE_DEVICES=1 python generate_multiframe.py -d /mnt/ssd2/jihun/dataset/sequences/00 -o /mnt/ssd2/jihun/dataset/multiframe/sequences/00 -n 4 -i 5
+
 
 ## How does the code work?
 - If you want to understand how the code works, I suggest you first understand the pseudo algorithm I made.
