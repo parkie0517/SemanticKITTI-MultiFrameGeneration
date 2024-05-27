@@ -155,53 +155,62 @@ def align_filter_add_binary_data(i_data, j_data, transformation_matrix):
 
     return i_data
 
-def align_filter_add_binary_data_optimized(i_data, j_data, transformation_matrix):
+def align_filter_add_binary_data_optimized(i_bin, j_bin, i_pose, j_pose):
     """
-    this function is used to transform j to i
-
-    1. transform
-    2. filter (I use filter to only convert j-th voxels that will be inside the i-th coordinate frame)
+    Description: This function is used to add j into i
+    ---------- ---------- ---------- ---------- ---------- 
+    Below are the main steps:
+    1. Transform j into i's coordinate frame
+    2. Filter (only convert j-th voxels that will be inside the i-th coordinate frame)
+    3. Add the filtered voxels to i_bin
+    ---------- ---------- ---------- ---------- ---------- 
+    This function will return the updated i_bin
     """
+    
+    """ 1. Transform """
     coords_list = []
     # repeat this process for all the individual voxels (computationally heavy....)
-    for z in range(j_data.shape[2]): # = range(0, 32)
-        for y in range(j_data.shape[1]): # = range(0, 256)
-            for x in range(j_data.shape[0]): # = range(0, 256)
-                if j_data[x, y, z] == 1:
+    for z in range(j_bin.shape[2]): # = range(0, 32)
+        for y in range(j_bin.shape[1]): # = range(0, 256)
+            for x in range(j_bin.shape[0]): # = range(0, 256)
+                if j_bin[x, y, z] == 1:
                     # 1. align
-                    voxel_coords = np.array([[x], [y], [z], [1]])
+                    voxel_coords = np.array([x, y, z, 1])
                     coords_list.append(voxel_coords)
-    # From here
-    j_coords = np.array(coords_list)
-    j_coords = j_coords.squeeze().T
+    j_coords = np.vstack(coords_list)
+    new_points = np.sum(np.expand_dims(j_coords, 2) * j_pose.T, axis=1)
+    new_points = new_points[:, :3] 
+    new_coords = new_points - i_pose[:3, 3]
+    new_coords = np.sum(np.expand_dims(new_coords, 2) * i_pose[:3, :3], axis=1)
 
-    translated_coords = transformation_matrix @ j_coords
+    quantized_coords = np.round(new_coords).astype(int) # Quantize the coordinates
 
-    quantized_coords = np.round(translated_coords).astype(int)
 
+    """ 2. Filter """
     # Extract x, y, z coordinates
-    x_coords = quantized_coords[0, :]
-    y_coords = quantized_coords[1, :]
-    z_coords = quantized_coords[2, :]
+    x_coords = quantized_coords[:, 0]
+    y_coords = quantized_coords[:, 1]
+    z_coords = quantized_coords[:, 2]
 
     # Create boolean masks based on boundary conditions
-    x_mask = (0 <= x_coords) & (x_coords < j_data.shape[0])
-    y_mask = (0 <= y_coords) & (y_coords < j_data.shape[1])
-    z_mask = (0 <= z_coords) & (z_coords < j_data.shape[2])
+    x_mask = (0 <= x_coords) & (x_coords < i_bin.shape[0])
+    y_mask = (0 <= y_coords) & (y_coords < i_bin.shape[1])
+    z_mask = (0 <= z_coords) & (z_coords < i_bin.shape[2])
 
     # Combine the masks to filter out coordinates outside the boundaries
     valid_mask = x_mask & y_mask & z_mask
 
     # Apply the mask to filter quantized_coords
-    filtered_coords = quantized_coords[:, valid_mask]
-
-    x_indices = filtered_coords[0, :]
-    y_indices = filtered_coords[1, :]
-    z_indices = filtered_coords[2, :]
-    i_data[x_indices, y_indices, z_indices] = 1
+    filtered_coords = quantized_coords[valid_mask, :]
 
 
-    return i_data
+    """ 3. Add """
+    for coord in filtered_coords:
+        x, y, z = coord
+        i_bin[x, y, z] = 1
+
+
+    return i_bin
 
 def align_filter_add_label_data(i_data, j_data, transformation_matrix):
     """
@@ -376,8 +385,7 @@ if __name__ == '__main__':
     poses_location = os.path.join(dataset, "poses.txt")
     print(poses_location)
     poses = load_poses(poses_location, Tr, Tr_inv)
-    print(len(poses))
-    exit(0)
+
 
     # Used for printing out the passed time during execution
     start_time = time.time()
@@ -404,38 +412,14 @@ if __name__ == '__main__':
             j_pose = poses[j] # read j-th pose
 
 
-            """ ORIGINAL
-            # now, let's calculate the pose difference between i and j
-            # rotational_diff, translation_diff = calculate_diff(i_pose, j_pose)
-            """
-
-            # get the calibrated transformation matrix
-            transformation_matrix = i_pose @ inv(j_pose)
-            #transformation_matrix = inv(i_pose) @ j_pose
- 
-            """ORIGINAL
-            # NOW WE SHALL BEGIN THE ALIGNING PROCESS! (align j into i-th space)
-            # I need to optimize this code.... takes so faqing long
-            aligned_j_bin = align_binary_data(j_bin, rotational_diff, translation_diff)
-            aligned_j_label = align_label_data(j_label, rotational_diff, translation_diff)
-            aligned_j_invalid = align_binary_data(j_invalid, rotational_diff, translation_diff)
-            aligned_j_occluded = align_binary_data(j_occluded, rotational_diff, translation_diff)
-            
-            i_bin = add_binary_data(i_bin, aligned_j_bin)
-            i_label = add_label_data(i_label, aligned_j_label)
-            i_invalid = add_binary_data(i_invalid, aligned_j_invalid)
-            i_occluded = add_binary_data(i_occluded, aligned_j_occluded)
-            """
-            
             """TEST"""
             # i_bin = align_filter_add_binary_data(i_bin, j_bin, transformation_matrix)
-            i_bin = align_filter_add_binary_data_optimized(i_bin, j_bin, transformation_matrix)
+            i_bin = align_filter_add_binary_data_optimized(i_bin, j_bin, i_pose, j_pose)
             #i_label = align_filter_add_label_data(i_label, j_label, transformation_matrix)
         
         # Save fused scan
         np.packbits(i_bin).tofile(os.path.join(output_dir, f"{i_file_base}.bin"))
 
-        exit(0)
         """
         # Save label file
         i_label.astype(np.uint16).tofile(os.path.join(output_dir, f"{i_file_base}.label"))
