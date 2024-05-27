@@ -75,7 +75,8 @@ def load_poses(poses_path, Tr, Tr_inv):
             pose_matrix = numbers.reshape((3, 4))
             # convert to a 4x4 matrix
             pose_matrix_4x4 = np.vstack([pose_matrix, [0, 0, 0, 1]])
-            pose_matrix_calib = Tr_inv @ (pose_matrix_4x4 @ Tr)
+            #pose_matrix_calib = Tr_inv @ (pose_matrix_4x4 @ Tr)
+            pose_matrix_calib = np.matmul(Tr_inv, np.matmul(pose_matrix_4x4, Tr))
             poses.append(pose_matrix_calib)
 
     return poses
@@ -373,8 +374,10 @@ if __name__ == '__main__':
 
     # 4. read poses.txt file (it's more efficient to read poses.txt just once)
     poses_location = os.path.join(dataset, "poses.txt")
+    print(poses_location)
     poses = load_poses(poses_location, Tr, Tr_inv)
-
+    print(len(poses))
+    exit(0)
 
     # Used for printing out the passed time during execution
     start_time = time.time()
