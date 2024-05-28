@@ -1,5 +1,5 @@
 """
-    This file 'generate_multiframe.py' is used to create multiframe semantic KITTI dataset.
+    This file 'generate_multiframe_v2.py' is used to create multiframe semantic KITTI dataset.
     Created by Heejun Park :)
 """
 import numpy as np
@@ -21,20 +21,33 @@ def count_files(directory):
     
     return file_count
 
-def get_data(file_base, dataset_path):
+def get_data_all(file_base, dataset_path):
     """
-        What does this function do?
-            - read the data
-            - return data
+    Description
+    This Function is used to read the point cloud and voxel data
+    ---------- ---------- ---------- ---------- ---------- 
+    Input
+    file_base: the name of the data we want to read (eg. 000000)
+    dataset_path: location of the original dataset
+    ---------- ---------- ---------- ---------- ---------- 
+    Below are the main steps
+    1. Define each of the file's location
+    2. Read each files independently
+    3. Return the read data
+    ---------- ---------- ---------- ---------- ---------- 
+    Output
+    i_pc, i_label, i_invalid, i_occluded 
     """
 
-    # build file path
-    bin_path = os.path.join(dataset_path, "voxels", f"{file_base}.bin")
-    label_path = os.path.join(dataset_path, "voxels", f"{file_base}.label")
-    invalid_path = os.path.join(dataset_path, "voxels", f"{file_base}.invalid")
-    occluded_path = os.path.join(dataset_path, "voxels", f"{file_base}.occluded")
+    # Function used to read and reshape point cloud data
+    def load_pc_data(file_path):
+        with open(file_path, 'rb') as file:
+            data = np.fromfile(file, dtype=np.float32) # Point cloud data are stored as 4 byte float type 
+            point_cloud_data = np.reshape(data, (-1, 4))
+            return point_cloud_data
 
-    # Function to read and reshape binary data
+
+    # Function used to read and reshape binary voxel data
     def load_binary_data(file_path):
         with open(file_path, 'rb') as file:
             data = np.fromfile(file, dtype=np.uint8)  # Read data as 8-bit unsigned integers
@@ -42,6 +55,7 @@ def get_data(file_base, dataset_path):
             return bits.reshape((256, 256, 32))  # Reshape to 3D array
 
 
+    # Function used to read and reshape label voxel
     def load_label_data(file_path):
         # Open the file in binary mode
         with open(file_path, 'rb') as file:
@@ -51,14 +65,56 @@ def get_data(file_base, dataset_path):
         return data.reshape((256, 256, 32))
 
 
+    # build file path
+    pc_path = os.path.join(dataset_path, "velodyne", f"{file_base}.bin")
+    label_path = os.path.join(dataset_path, "voxels", f"{file_base}.label")
+    invalid_path = os.path.join(dataset_path, "voxels", f"{file_base}.invalid")
+    occluded_path = os.path.join(dataset_path, "voxels", f"{file_base}.occluded")
+    
+    
     # 2. read the data
-    bin_data = load_binary_data(bin_path)
+    pc_data = load_pc_data(pc_path)
     label_data = load_label_data(label_path)
     invalid_data = load_binary_data(invalid_path)
     occluded_data = load_binary_data(occluded_path)
 
     # 3. return the data
-    return bin_data, label_data, invalid_data, occluded_data
+    return pc_data, label_data, invalid_data, occluded_data
+
+def get_pc(file_base, dataset_path):
+    """
+    Description
+    This Function is used to read the point cloud 
+    ---------- ---------- ---------- ---------- ---------- 
+    Input
+    file_base: the name of the data we want to read (eg. 000000)
+    dataset_path: location of the original dataset
+    ---------- ---------- ---------- ---------- ---------- 
+    Below are the main steps
+    1. Define point cloud data's location
+    2. Read the file
+    3. Return the read data
+    ---------- ---------- ---------- ---------- ---------- 
+    Output
+    i_pc
+    """
+
+    # Function used to read and reshape point cloud data
+    def load_pc_data(file_path):
+        with open(file_path, 'rb') as file:
+            data = np.fromfile(file, dtype=np.float32) # Point cloud data are stored as 4 byte float type 
+            point_cloud_data = np.reshape(data, (-1, 4))
+            return point_cloud_data
+
+
+    # build file path
+    pc_path = os.path.join(dataset_path, "velodyne", f"{file_base}.bin")
+
+    # 2. read the data
+    pc_data = load_pc_data(pc_path)
+
+    # 3. return the data
+    return pc_data
 
 def load_poses(poses_path, Tr, Tr_inv):
     """
@@ -232,6 +288,7 @@ def align_filter_add_binary_data(i_bin, j_bin, i_pose, j_pose):
 if __name__ == '__main__':
     start_time = time.time()
     print('######################################################################')
+    print('########## Settings Before Generatating MultiFrame Dataset ###########')
     print('######################################################################')
 
     # 1. argument settings
@@ -277,7 +334,7 @@ if __name__ == '__main__':
     
 
     # this should be automatically done
-    voxel_locaiton = os.path.join(dataset, "voxels/")
+    pc_location = os.path.join(dataset, "velodyne/")
 
     # 2. output directory settings
     output_dir = os.path.join(output, "voxels")
@@ -290,18 +347,17 @@ if __name__ == '__main__':
 
     
 
-    number_input_files = count_files(voxel_locaiton)
-
-    number_distinct_input_files = int(number_input_files/4)  # bin, label, occluded, invalid. so I am dividing by 4
-    
+    number_input_files = count_files(pc_location)
+    number_distinct_input_files = int(number_input_files/increment) + 1  # we want to use 0, 5, 10, ....   
     sequence_length = (number_distinct_input_files-1)*increment
 
-    # Variblaes needed for printing progress
+    # Variblaes needed for printing the progress
     number_output_files = number_distinct_input_files - (n-1)
-    progress_interval_percent = 10 # print every 10 percent
+    progress_interval_percent = 10 # print for every 10 percent
     progress_interval = number_output_files//progress_interval_percent 
 
-    # Copy necessary files
+
+    # Copy 'poses.txt', 'calib.txt', 'times.txt' to the destination folder  
     shutil.copy(os.path.join(dataset, "poses.txt"), output)
     shutil.copy(os.path.join(dataset, "calib.txt"), output)
     shutil.copy(os.path.join(dataset, "times.txt"), output)
@@ -325,38 +381,40 @@ if __name__ == '__main__':
     poses_location = os.path.join(dataset, "poses.txt")
     poses = load_poses(poses_location, Tr, Tr_inv)
 
+
+    print('######################################################################')
+    print('############### Begin Generatating MultiFrame Dataset ################')
+    print('######################################################################')
+
     # Used for printing out the passed time during execution
     start_time = time.time()
-    print("Begin :)")
-
 
     # algorithm for creating the multi-frame semantic KITTI dataset
     for i in range(0, sequence_length - increment * (n-2), increment):
 
-        # Create File Base String
-        i_file_base = f"{i:06d}" # Convert i's data type from INT to STR and pad 0 at the front
 
-        # read i-th data
-        i_bin, i_label, i_invalid, i_occluded = get_data(i_file_base, dataset) # read i-th voxel data
+        # Read necessary files
+        i_file_base = f"{i:06d}" # Convert i's data type from INT to STR and pad 0 at the front
+        i_pc = get_pc(i_file_base, dataset) # read i-th point cloud data
         i_pose = poses[i] # read i-th pose
 
-        # Copy label, invalid, occluded file
+
+        # Copy label, invalid, occluded files into the destination folder
         shutil.copy(os.path.join(dataset, "voxels", f"{i_file_base}.label"), output_dir)
         shutil.copy(os.path.join(dataset, "voxels", f"{i_file_base}.invalid"), output_dir)
         shutil.copy(os.path.join(dataset, "voxels", f"{i_file_base}.occluded"), output_dir)
+        
 
+        # Repeat to fuse differenet lidar scans
         for j in range(i + increment, i + increment * n, increment):
 
-            j_file_base = f"{j:06d}" # Convert i's data type from INT to STR and pad 0 at the front
-            # read j-th data
-            j_bin, j_label, j_invalid, j_occluded = get_data(j_file_base, dataset) # read j-th voxel data
+            # Read necessary files
+            j_file_base = f"{j:06d}" # Convert j's data type from INT to STR and pad 0 at the front
+            j_pc = get_pc(j_file_base, dataset) # read j-th point cloud data
             j_pose = poses[j] # read j-th pose
 
-            import pdb;pdb.set_trace()
-            """TEST"""
-            # i_bin = align_filter_add_binary_data(i_bin, j_bin, transformation_matrix)
+
             i_bin = align_filter_add_binary_data_optimized(i_bin, j_bin, i_pose, j_pose)
-            #i_label = align_filter_add_label_data(i_label, j_label, transformation_matrix)
         
         # Save fused scan
         np.packbits(i_bin).tofile(os.path.join(output_dir, f"{i_file_base}.bin"))
