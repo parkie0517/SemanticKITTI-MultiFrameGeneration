@@ -188,7 +188,6 @@ def align_filter_add_binary_data_optimized(i_bin, j_bin, i_pose, j_pose):
     z, y, x = np.nonzero(j_bin)
     ones = np.ones_like(x)
     j_coords = np.vstack((x, y, z, ones)).T
-    import pdb;pdb.set_trace()
     # Transform the coordinates from j's frame to i's frame
     new_points = (j_coords @ j_pose.T)[:, :3]
     new_points = new_points - i_pose[:3, 3]
@@ -284,6 +283,48 @@ def align_filter_add_binary_data(i_bin, j_bin, i_pose, j_pose):
 
     return i_bin
 
+
+def fuse_multiscan(i_pc, j_pc, i_pose, j_pose):
+    """
+    ---------- ---------- ---------- ---------- ---------- 
+    Description
+    This function is used to add j into i
+    ---------- ---------- ---------- ---------- ---------- 
+    Input
+    i_pc: i's point cloud data
+    j_pc: j's point cloud data
+    i_pose: i's pose information
+    j_pose: j's pose information
+    ---------- ---------- ---------- ---------- ---------- 
+    Below are the main steps
+    1. Fuse multiscan using the pose information
+    2. Filter out point cloud that are outside the boundary
+    3. Voxelize
+    ---------- ---------- ---------- ---------- ---------- 
+    Output
+    fused i + j in voxel format
+    ---------- ---------- ---------- ---------- ---------- 
+    """
+    
+    """ 1. Fuse using the pose information """
+    # 1.1. Convert j_pc into World Coodinate System 
+    hpoints = np.hstack((j_pc[:, :3], np.ones_like(j_pc[:, :1]))) # create a homogeneous coordinate, so hpoints.shape == (n, 4) 
+    new_points = np.sum(np.expand_dims(hpoints, 2) * j_pose.T, axis=1) # check
+    new_points = new_points[:, :3] # transform back to the (1, 3) shaped coordinate
+    
+    # 1.2. Convert j_pc into i_pc Coordinate System
+    new_coords = new_points - i_pose[:3, 3] # apply translation difference
+    new_coords = np.sum(np.expand_dims(new_coords, 2) * i_pose[:3, :3], axis=1) # apply rotation difference
+    new_coords = np.hstack((new_coords, j_pc[:, 3:])) # add the 4th column back to the transformed coordinates
+
+    # 1.3. Fuse i_pc and transformed j_pc
+    fused_pc = np.concatenate((i_pc, new_coords), 0)
+
+    """ 2. Filter Point Cloud """
+    
+
+
+    return i_bin
 
 if __name__ == '__main__':
     start_time = time.time()
@@ -414,7 +455,7 @@ if __name__ == '__main__':
             j_pose = poses[j] # read j-th pose
 
 
-            i_bin = align_filter_add_binary_data_optimized(i_bin, j_bin, i_pose, j_pose)
+            i_bin = fuse_multiscan(i_pc, j_pc, i_pose, j_pose)
         
         # Save fused scan
         np.packbits(i_bin).tofile(os.path.join(output_dir, f"{i_file_base}.bin"))
