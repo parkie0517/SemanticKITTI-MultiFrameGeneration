@@ -24,6 +24,7 @@ This repository is used to <u>**generate MultiFrame semantic-KITTI Dataset**</u>
 ![alt text](./image_src/structure.png)
 
 ## Running the code
+### Converting the whole Sequences
 If you run into any 'missing module' errors while running the code, then simply download the missing modules!  
 Follow the steps below.
 - First, create a tmux session
@@ -39,6 +40,7 @@ Follow the steps below.
     - sh ./generate_multiframe.sh
 - if you get an error try getting rid of 'CUDA_VISIBLE_DEVICES=1' in the 'generate_multiframe.sh' file.
 
+### Converting just one Sequence
 - CUDA_VISIBLE_DEVICES=1 python generate_multiframe_v2.py -d /mnt/ssd2/jihun/dataset/sequences/00 -o /mnt/ssd2/jihun/dataset_MF/sequences/00 -n 4 -i 5
 
 
