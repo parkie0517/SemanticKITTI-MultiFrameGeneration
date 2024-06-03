@@ -337,8 +337,6 @@ if __name__ == '__main__':
 
         # Save fused scan
         np.packbits(voxel_grid).tofile(os.path.join(output_dir, f"{i_file_base}.bin"))
-        if (i == 20):
-            exit(0)
 
         # Print progress & time
         if (i!= 0) and (i != progress_interval*increment*10) and (i % (progress_interval*increment) == 0.0):
