@@ -122,7 +122,6 @@ def fuse_multiscan(i_pc, j_pc, i_pose, j_pose):
     ---------- ---------- ---------- ---------- ---------- 
     Below are the main steps
     1. Fuse multiscan using the pose information
-    2. Filter out point cloud that are outside the boundary
     ---------- ---------- ---------- ---------- ---------- 
     Output
     fused i + j in point cloud format
@@ -141,23 +140,65 @@ def fuse_multiscan(i_pc, j_pc, i_pose, j_pose):
     new_coords = np.hstack((new_coords, j_pc[:, 3:])) # add the 4th column back to the transformed coordinates
 
     # 1.3. Fuse i_pc and transformed j_pc
-    fused_pc = np.concatenate((i_pc, new_coords), 0)
+    i_pc = np.concatenate((i_pc, new_coords), 0)
+
+
+    return i_pc
 
 
 
-    return fused_pc
+def voxelize(data):
+    xyz = data[:, :3]
+    sig = data[:, 3:]
+
+    output_shape = (256, 256, 32)
+    grid_size = np.asarray(output_shape)
+
+    max_volume_space=[51.2, 25.6, 4.4]
+    min_volume_space=[0, -25.6, -2]
+
+    max_bound = np.asarray(max_volume_space)
+    min_bound = np.asarray(min_volume_space)
 
 
-"""
-    Global Variables
-"""
-max_volume_space=[51.2, 25.6, 4.4]
-min_volume_space=[0, -25.6, -2]
+    # Filter point cloud
+    xyz0 = xyz
+    for ci in range(3):
+        xyz0[xyz[:, ci] < min_bound[ci], :] = 1000
+        xyz0[xyz[:, ci] > max_bound[ci], :] = 1000
+    valid_inds = xyz0[:, 0] != 1000
+    xyz = xyz[valid_inds, :]
+    sig = sig[valid_inds]
+  
 
-max_bound = np.asarray(max_volume_space)
-min_bound = np.asarray(min_volume_space)
+
+    # transpose centre coord for x axis
+    x_bias = (max_volume_space[0] - min_volume_space[0])/2
+    min_bound[0] -= x_bias
+    max_bound[0] -= x_bias
+    xyz[:, 0] -= x_bias
 
 
+    # get grid index
+    crop_range = max_bound - min_bound
+    cur_grid_size = grid_size
+
+    intervals = crop_range / (cur_grid_size - 1)
+    
+    if (intervals == 0).any(): print("Zero interval!")
+
+    grid_ind = (np.floor((np.clip(xyz, min_bound, max_bound) - min_bound) / intervals)).astype(int)
+
+    # voxelize
+    # Initialize the voxel grid with zeros
+    voxel_grid = np.zeros(output_shape, dtype=np.uint8)
+
+    # Set the specified indices to 1
+    for idx in grid_ind:
+        voxel_grid[idx[0], idx[1], idx[2]] = 1
+
+
+    return voxel_grid
 
 
 if __name__ == '__main__':
@@ -288,12 +329,16 @@ if __name__ == '__main__':
             j_pc = get_pc(j_file_base, dataset) # read j-th point cloud data
             j_pose = poses[j] # read j-th pose
  
-
             i_pc = fuse_multiscan(i_pc, j_pc, i_pose, j_pose)
-        # Save fused scan
         
-        np.packbits(i_bin).tofile(os.path.join(output_dir, f"{i_file_base}.bin"))
-        exit(0)
+
+        # Voxelize fused multiscan
+        voxel_grid = voxelize(i_pc)
+
+        # Save fused scan
+        np.packbits(voxel_grid).tofile(os.path.join(output_dir, f"{i_file_base}.bin"))
+        if (i == 20):
+            exit(0)
 
         # Print progress & time
         if (i!= 0) and (i != progress_interval*increment*10) and (i % (progress_interval*increment) == 0.0):
