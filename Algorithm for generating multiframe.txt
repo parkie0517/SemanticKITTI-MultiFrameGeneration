@@ -1,0 +1,38 @@
+Algorithm for generating multiframe semantic KITTI
+n: the number of the frames that will be combined (eg. n = 4, then 4 frames are being combined)
+i: the frame that is being added (eg. i = 000000 and n = 4, then 000005, 000010, 000015 are added to 000000)
+
+# repeat for all the files except for the last few
+for i in [000000, 000005, .... , 004540 - 5*(n-1)] # the algorithm should be able to find the last data in the directory (in this example the last data is 004540)
+    # open i data
+    i_bin = get_data(i)
+
+    # read i pose
+    i_pose = get_pose(i)
+
+    for j in [i+5*(1), i+5*(2), .... , i+5*(n-1)]
+        # open j data
+        j_bin = get_data(j)
+
+        # read j pose
+        j_pose = get_pose(j)
+        
+        
+        # converts j to world coordinate
+        j_bin = to_world_coordinate(j_bin, j_pose)
+
+        # converts j to i's coordinate
+        j_bin = to_lidar_coordinate(j_bin, i_pose)
+        
+
+        # filter out voxels that are outside of the i's space
+        j_bin = filter(j_bin)
+
+        # add filtered voxels into i space
+        i_bin = add(i_bin, j_bin)
+
+    # voxelize and save
+    voxelize_save(i_bin)
+
+
+
