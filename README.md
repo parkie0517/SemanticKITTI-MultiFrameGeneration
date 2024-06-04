@@ -6,14 +6,25 @@ This repository is used to <u>**Generate Fused MultiFrame semantic-KITTI Dataset
 
 ## Visualization Result
 Below is a visualization result of the fused voxels. As you can see, the fused voxels is much more dense than the original voxels.
-1. Original Voxels (1 LiDar scan)
+1. Original Voxels (1 LiDAR scan)
 2. Fused Voxels (4 consecutive LiDAR scans)
 3. Label Voxels  
 
 ![alt text](<image_src/Original Bin.png>) ![alt text](<image_src/Fused Bin.png>) ![alt text](<image_src/Original Label.png>)
 
 ## Prerequisites
-Below are the required knowledge you must have
+Below are the required knowledge you must have in order to understand my code.
+1. 3D Geometry
+    - World Coordinate → LiDAR Coordinate
+    - LiDAR Coordinate → World Coordinate
+2. Programming skills
+    - Python
+    - Shell
+    - Linux
+    - Numpy
+    - Tmux
+
+However, if you not interested, you don't have to understand my code :P
 
 ## Environment Settings
 - Create a conda environment
@@ -54,7 +65,7 @@ Follow the steps below.
 - If you want to understand how the code works, I suggest you first understand the pseudo algorithm I made.
 - The image below is the pseudo algorithm that I made before creating the actual code.
 - I think it is very important to create a simple pseudo algorithm before coding something very complicated.
-- The pseudo algorithm helps you not get lost in the complicated steps of coding. 
+- The pseudo algorithm helps you not get lost during the complicated steps of coding. 
 ![alt text](./image_src/algorithm.png)
 
 
@@ -62,5 +73,5 @@ Follow the steps below.
 This section is for my own reference. You do not need to read this sectin!
 Dataset -> F(Dataset) -> MF Dataset 
 - Prepare semantic-KITTI dataset ✅
-- Use code to generate MF ⬜
-- Check the output result ⬜
+- Use code to generate MF ✅
+- Check the output result ✅
