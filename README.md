@@ -1,7 +1,7 @@
-# SemanticKITTI-MultiFrameGeneration
+# SemanticKITTI-MultiFrameFusion
 
 
-## What is the purpose of this repository?!
+## What is the purpose of this repository?
 This repository is used to <u>**generate MultiFrame semantic-KITTI Dataset**</u>, especially for the <u>**Semantic Scene Completion (SSC) Task**</u>.
 
 ## Visualization Result
