@@ -2,12 +2,18 @@
 
 
 ## What is the purpose of this repository?
-This repository is used to <u>**generate MultiFrame semantic-KITTI Dataset**</u>, especially for the <u>**Semantic Scene Completion (SSC) Task**</u>.
+This repository is used to <u>**Generate Fused MultiFrame semantic-KITTI Dataset**</u>, especially for the <u>**Semantic Scene Completion (SSC) Task**</u>.
 
 ## Visualization Result
+Below is a visualization result of the fused voxels. As you can see, the fused voxels is much more dense than the original voxels.
+1. Original Voxels (1 LiDar scan)
+2. Fused Voxels (4 consecutive LiDAR scans)
+3. Label Voxels  
 
+![alt text](<image_src/Original Bin.png>) ![alt text](<image_src/Fused Bin.png>) ![alt text](<image_src/Original Label.png>)
 
 ## Prerequisites
+Below are the required knowledge you must have
 
 ## Environment Settings
 - Create a conda environment
