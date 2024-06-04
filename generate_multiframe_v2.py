@@ -148,8 +148,6 @@ def fuse_multiscan(i_pc, j_pc, i_pose, j_pose):
 
 
 def voxelize(data):
-    xyz = data[:, :3]
-    sig = data[:, 3:]
 
     output_shape = (256, 256, 32)
     grid_size = np.asarray(output_shape)
@@ -161,6 +159,9 @@ def voxelize(data):
     min_bound = np.asarray(min_volume_space)
 
 
+    xyz = data[:, :3] # transform back to (1, 3) shaped coordinate
+
+
     # Filter point cloud
     xyz0 = xyz
     for ci in range(3):
@@ -168,7 +169,6 @@ def voxelize(data):
         xyz0[xyz[:, ci] > max_bound[ci], :] = 1000
     valid_inds = xyz0[:, 0] != 1000
     xyz = xyz[valid_inds, :]
-    sig = sig[valid_inds]
   
 
 
@@ -335,8 +335,10 @@ if __name__ == '__main__':
         # Voxelize fused multiscan
         voxel_grid = voxelize(i_pc)
 
+
         # Save fused scan
         np.packbits(voxel_grid).tofile(os.path.join(output_dir, f"{i_file_base}.bin"))
+
 
         # Print progress & time
         if (i!= 0) and (i != progress_interval*increment*10) and (i % (progress_interval*increment) == 0.0):
@@ -346,7 +348,9 @@ if __name__ == '__main__':
             seconds_passed = int(elapsed_time % 60)
             unge = sequence_length - increment * (n-1)
             print(f'Progress: {i/unge*100.0:.2f}%, Time Passes: {minutes_passed}:{seconds_passed:02d}')
-    
+
+
+
     # Print final progress and time
     end_time = time.time()
     elapsed_time = end_time - start_time
