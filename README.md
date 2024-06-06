@@ -75,3 +75,8 @@ Dataset -> F(Dataset) -> MF Dataset
 - Prepare semantic-KITTI dataset ✅
 - Use code to generate MF ✅
 - Check the output result ✅
+- Create label voxels ⬜
+    - mapping: pc_code -> voxel_code
+    - voxelize
+        - read label pc
+        - 하나의 voxel 안에 여러 개의 label이 존재하는 경우 어떻게 처리해야 하나?
