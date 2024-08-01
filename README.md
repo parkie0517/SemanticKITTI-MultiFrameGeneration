@@ -6,7 +6,7 @@ This repository is used to <u>**Generate Fused MultiFrame semantic-KITTI Dataset
 
 ## Visualization Result
 Below is a visualization result of the fused voxels. As you can see, the fused voxels is much more dense than the original voxels.
-1. Original Voxels (1 LiDAR scan)
+1. Original Voxel (1 LiDAR scan)
 2. Fused Voxels (4 consecutive LiDAR scans)
 3. Label Voxels  
 
